@@ -1,0 +1,12 @@
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://api.deepseek.com/v1
+      api-key: ${API_KEY:${API-KEY:}}
+      model-name: deepseek-chat
+      log-requests: true
+      log-responses: true
+
+logging:
+  level:
+    dev.langchain4j: debug

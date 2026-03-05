@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>医疗顾问助手</title>
+  <style>
+    :root {
+      --bg-1: #eef4ff;
+      --bg-2: #f8fbff;
+      --panel: rgba(255, 255, 255, 0.92);
+      --panel-strong: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --border: #dbe7ff;
+      --focus: rgba(37, 99, 235, 0.22);
+      --shadow-soft: 0 8px 30px rgba(37, 99, 235, 0.08);
+      --shadow-card: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", "Microsoft YaHei", "PingFang SC", sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background:
+        radial-gradient(circle at 10% 10%, #dbeafe 0%, transparent 38%),
+        radial-gradient(circle at 90% 90%, #e0e7ff 0%, transparent 35%),
+        linear-gradient(160deg, var(--bg-1), var(--bg-2));
+    }
+
+    .app {
+      width: min(1650px, 97vw);
+      height: min(940px, 95vh);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+    }
+
+    .header {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, #ffffff, #f9fbff);
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pulse {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
+      70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .header small {
+      color: var(--muted);
+      font-size: 12px;
+      background: #f1f5ff;
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 999px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(300px, 430px) 1fr minmax(300px, 430px) auto auto;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      background: #fcfdff;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #d7e3ff;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 14px;
+      line-height: 1.4;
+      outline: none;
+      background: #ffffff;
+      min-height: 44px;
+      color: var(--text);
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    input:hover, textarea:hover, select:hover {
+      border-color: #bfd3ff;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px var(--focus);
+      transform: translateY(-1px);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 96px;
+      max-height: 220px;
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 36px;
+      background-image: linear-gradient(45deg, transparent 50%, #64748b 50%), linear-gradient(135deg, #64748b 50%, transparent 50%);
+      background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 12px) calc(50% - 2px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+    }
+
+    button {
+      border: 0;
+      background: var(--primary);
+      color: #ffffff;
+      border-radius: 11px;
+      padding: 11px 16px;
+      min-height: 44px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+      transition: transform .18s ease, background .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 18px rgba(29, 78, 216, 0.26);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: .58;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-stop {
+      background: var(--danger);
+      box-shadow: 0 6px 14px rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-stop:hover {
+      background: var(--danger-hover);
+      box-shadow: 0 10px 18px rgba(220, 38, 38, 0.28);
+    }
+
+    .chat {
+      min-height: 0;
+      overflow: auto;
+      padding: 18px 20px;
+      background: linear-gradient(180deg, #fafdff 0%, #f7fbff 100%);
+    }
+
+    .chat::-webkit-scrollbar { width: 10px; }
+    .chat::-webkit-scrollbar-thumb { background: #c8d8ff; border-radius: 999px; }
+    .chat::-webkit-scrollbar-track { background: transparent; }
+
+    .msg {
+      margin-bottom: 14px;
+      line-height: 1.62;
+      white-space: pre-wrap;
+      animation: fadeIn .22s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg .meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .msg.user { text-align: right; }
+
+    .bubble {
+      display: inline-block;
+      text-align: left;
+      max-width: min(900px, 88%);
+      padding: 11px 13px;
+      border-radius: 12px;
+      border: 1px solid #d8e3ff;
+      background: var(--panel-strong);
+      box-shadow: var(--shadow-card);
+    }
+
+    .msg.user .bubble {
+      background: linear-gradient(180deg, #eef4ff, #e7efff);
+      border-color: #bfd3ff;
+    }
+
+    .composer {
+      padding: 14px 20px 18px;
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .composer-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .thinking {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      color: #334155;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+
+    .thinking.show { display: inline-flex; }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #3b82f6;
+      animation: blink 1.2s infinite ease-in-out;
+    }
+
+    .dot:nth-child(2) { animation-delay: .15s; }
+    .dot:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes blink {
+      0%, 80%, 100% { opacity: .25; transform: translateY(0); }
+      40% { opacity: 1; transform: translateY(-2px); }
+    }
+
+    @media (max-width: 1200px) {
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar button {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        width: 99vw;
+        height: 97vh;
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .header {
+        padding: 14px 14px;
+      }
+
+      .composer,
+      .chat,
+      .toolbar {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+
+      .bubble {
+        max-width: 94%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="header">
+      <div class="title-wrap">
+        <span class="pulse"></span>
+        <h1>医疗顾问助手</h1>
+      </div>
+      <small>后端：/chat</small>
+    </div>
+
+    <div class="toolbar">
+      <select id="sessionSelect" aria-label="session select"></select>
+      <input id="quick" placeholder="可选：快速问题，例如 我最近头痛怎么办" aria-label="quick message" />
+      <select id="commonQuestionSelect" aria-label="common medical questions">
+        <option value="">常见医疗咨询（可一键填充）</option>
+      </select>
+      <button id="newSessionBtn">新建会话</button>
+      <button id="quickSend">快速发送</button>
+    </div>
+
+    <section id="chat" class="chat" aria-live="polite"></section>
+
+    <div class="composer">
+      <textarea id="message" rows="4" placeholder="请输入你的问题（Ctrl+Enter 发送）" aria-label="message"></textarea>
+      <div class="composer-actions">
+        <button id="stopBtn" class="btn-stop" disabled>终止思考</button>
+        <button id="sendBtn">发送</button>
+      </div>
+      <div id="thinking" class="thinking" aria-live="polite">
+        <span>正在思考中</span>
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div class="hint">会话ID由系统自动生成（id1、id2...），用户仅可选择已有会话或新建会话。</div>
+    </div>
+  </main>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const sessionSelect = document.getElementById('sessionSelect');
+    const messageEl = document.getElementById('message');
+    const quickEl = document.getElementById('quick');
+    const commonQuestionSelect = document.getElementById('commonQuestionSelect');
+    const sendBtn = document.getElementById('sendBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const thinkingEl = document.getElementById('thinking');
+    const quickSend = document.getElementById('quickSend');
+    const newSessionBtn = document.getElementById('newSessionBtn');
+
+    let currentAbortController = null;
+
+    function now() {
+      const d = new Date();
+      return d.toLocaleTimeString();
+    }
+
+    function append(role, text) {
+      const wrap = document.createElement('div');
+      wrap.className = `msg ${role}`;
+      wrap.innerHTML = `
+        <div class="meta">${role === 'user' ? '你' : '医疗顾问'} · ${now()}</div>
+        <div class="bubble"></div>
+      `;
+      wrap.querySelector('.bubble').textContent = text;
+      chat.appendChild(wrap);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function clearChat() {
+      chat.innerHTML = '';
+    }
+
+    const commonQuestions = [
+      '最近反复头痛并伴有恶心，可能是什么原因，是否需要做头部检查？',
+      '连续发烧两天，体温38.5℃左右，应该怎么处理，什么时候需要去医院？',
+      '咳嗽一周有黄痰，是否考虑细菌感染，需要用抗生素吗？',
+      '喉咙痛、吞咽困难并低烧，可能是普通感冒还是扁桃体炎？',
+      '腹痛伴腹泻一天，如何判断是急性肠胃炎还是更严重问题？',
+      '胃胀反酸、饭后烧心，应该如何缓解，是否需要做胃镜？',
+      '最近总是失眠、入睡困难，白天乏力，该如何调整？',
+      '血压最近多次在140/90以上，是否属于高血压，需要吃药吗？',
+      '体检发现空腹血糖偏高，如何判断糖尿病前期并进行干预？',
+      '皮肤突然起红疹并发痒，如何判断过敏原因，需不需要就医？',
+      '孩子反复咳嗽、夜间加重，如何区分过敏性咳嗽和感染？',
+      '女性月经推迟且下腹隐痛，可能是什么情况，需做哪些检查？'
+    ];
+
+    function initCommonQuestions() {
+      commonQuestions.forEach(q => {
+        const op = document.createElement('option');
+        op.value = q;
+        op.textContent = q;
+        commonQuestionSelect.appendChild(op);
+      });
+    }
+
+    function setLoading(flag) {
+      sendBtn.disabled = flag;
+      quickSend.disabled = flag;
+      newSessionBtn.disabled = flag;
+      sessionSelect.disabled = flag;
+      commonQuestionSelect.disabled = flag;
+      stopBtn.disabled = !flag;
+      thinkingEl.classList.toggle('show', flag);
+    }
+
+    async function loadSessions(selectLast = false) {
+      const res = await fetch('/sessions');
+      if (!res.ok) throw new Error('获取会话列表失败');
+      const list = await res.json();
+
+      sessionSelect.innerHTML = '';
+      list.forEach(item => {
+        const op = document.createElement('option');
+        op.value = item.sessionId;
+        op.textContent = `${item.title}（${item.sessionId}）`;
+        sessionSelect.appendChild(op);
+      });
+
+      if (selectLast && list.length > 0) {
+        sessionSelect.value = list[list.length - 1].sessionId;
+      }
+    }
+
+    async function createSession() {
+      setLoading(true);
+      try {
+        const res = await fetch('/sessions', { method: 'POST' });
+        if (!res.ok) throw new Error('创建会话失败');
+        await loadSessions(true);
+        clearChat();
+        append('bot', `已创建新会话：${sessionSelect.value}`);
+      } catch (e) {
+        append('bot', '创建会话失败：' + (e.message || e));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function sendMessage(text) {
+      const sessionId = sessionSelect.value;
+      const message = text.trim();
+      if (!sessionId) return alert('请先选择会话');
+      if (!message) return;
+
+      append('user', message);
+      setLoading(true);
+
+      try {
+        currentAbortController = new AbortController();
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, message }),
+          signal: currentAbortController.signal
+        });
+
+        const contentType = res.headers.get('content-type') || '';
+        if (!res.ok) {
+          if (contentType.includes('application/json')) {
+            const err = await res.json();
+            throw new Error(err.message || '请求失败');
+          }
+          throw new Error(await res.text());
+        }
+
+        const data = await res.text();
+        append('bot', data || '(空响应)');
+        const current = sessionId;
+        await loadSessions(false);
+        sessionSelect.value = current;
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          append('bot', '已终止本次思考。');
+        } else {
+          append('bot', '请求失败：' + (e.message || e));
+        }
+      } finally {
+        currentAbortController = null;
+        setLoading(false);
+      }
+    }
+
+    sendBtn.addEventListener('click', () => sendMessage(messageEl.value));
+    quickSend.addEventListener('click', () => sendMessage(quickEl.value));
+    newSessionBtn.addEventListener('click', createSession);
+    stopBtn.addEventListener('click', () => {
+      if (currentAbortController) currentAbortController.abort();
+    });
+
+    commonQuestionSelect.addEventListener('change', () => {
+      if (commonQuestionSelect.value) {
+        quickEl.value = commonQuestionSelect.value;
+      }
+    });
+
+    messageEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        sendMessage(messageEl.value);
+      }
+    });
+
+    (async () => {
+      try {
+        initCommonQuestions();
+        await loadSessions();
+        if (sessionSelect.options.length === 0) {
+          await createSession();
+        }
+        append('bot', '你好，我是你的医疗顾问助手。');
+      } catch (e) {
+        append('bot', '初始化失败：' + (e.message || e));
+      }
+    })();
+  </script>
+</body>
+</html>
