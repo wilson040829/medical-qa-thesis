@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.example</groupId>
-    <artifactId>consultant</artifactId>
+    <artifactId>medical-qa-thesis</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>consultant</name>
-    <description>consultant</description>
+    <name>基于Spring Boot与LangChain4j的智能医疗问答系统</name>
+    <description>毕设项目：基于Spring Boot与LangChain4j的智能医疗问答系统</description>
     <url/>
     <licenses>
         <license/>

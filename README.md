@@ -1,4 +1,4 @@
-# consultant · 医疗问答助手
+# 基于Spring Boot与LangChain4j的智能医疗问答系统（毕设）
 
 一个基于 **Spring Boot + LangChain4j + DeepSeek + RAG** 的医疗咨询演示项目。  
 支持会话管理、会话标题概括、常见问题快速咨询、思考中断与现代化前端交互。
@@ -133,7 +133,7 @@ api-key: ${API_KEY:${API-KEY:}}
 ## 📁 代码结构
 
 ```text
-consultant/
+medical-qa-thesis/
 ├─ src/
 │  ├─ main/
 │  │  ├─ java/org/example/consultant/
