@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG 可视化后台</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --bg2:#111a2e;
+      --card:rgba(255,255,255,.08);
+      --card-border:rgba(255,255,255,.14);
+      --text:#e7eefc;
+      --muted:#9fb2d1;
+      --primary:#4f8cff;
+      --danger:#ef4444;
+      --ok:#22c55e;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+      background: radial-gradient(circle at 10% 10%, #1c2d53 0%, transparent 35%),
+                  radial-gradient(circle at 90% 80%, #13355a 0%, transparent 35%),
+                  linear-gradient(160deg,var(--bg),var(--bg2));
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+    .hero{
+      padding:18px 20px;
+      border:1px solid var(--card-border);
+      border-radius:16px;
+      background:var(--card);
+      backdrop-filter: blur(10px);
+      margin-bottom:16px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+    }
+    .hero h1{margin:0;font-size:24px}
+    .sub{color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+    .kpi{
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:14px;
+      padding:12px;
+      backdrop-filter: blur(10px);
+    }
+    .kpi .k{color:var(--muted);font-size:12px}
+    .kpi .v{font-size:22px;font-weight:700;margin-top:4px}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--card-border);
+      border-radius:14px;
+      padding:14px;
+      margin-bottom:14px;
+      backdrop-filter: blur(10px);
+    }
+    h2{margin:0 0 10px;font-size:17px}
+    button{
+      background:var(--primary);
+      color:#fff;border:0;border-radius:10px;
+      padding:9px 12px;cursor:pointer;margin-right:8px;
+      transition:.2s;
+    }
+    button:hover{transform:translateY(-1px);filter:brightness(1.08)}
+    button.danger{background:var(--danger)}
+    pre{
+      margin:10px 0 0;
+      background:rgba(5,8,16,.8);
+      color:#cfe3ff;
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:10px;
+      padding:12px;
+      overflow:auto;
+      max-height:380px;
+    }
+    .row{display:grid;grid-template-columns:1fr 2fr;gap:12px}
+    .session-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .session-list button{background:#334155}
+    .ok-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+
+    @media (max-width:1000px){
+      .grid{grid-template-columns:1fr 1fr}
+      .row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <h1>医疗问答系统 · RAG 可视化后台</h1>
+      <div class="sub"><span class="ok-dot"></span>运行状态可视化 / 本地记忆管理 / 一键数据库清理</div>
+    </div>
+    <div>
+      <button onclick="location.href='/index.html'">打开聊天页</button>
+      <button onclick="loadOverview()">刷新数据</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="kpi"><div class="k">记忆会话数</div><div class="v" id="kpiSessions">-</div></div>
+    <div class="kpi"><div class="k">minScore</div><div class="v" id="kpiScore">-</div></div>
+    <div class="kpi"><div class="k">maxResults</div><div class="v" id="kpiResults">-</div></div>
+    <div class="kpi"><div class="k">splitter</div><div class="v" id="kpiSplitter">-</div></div>
+  </div>
+
+  <div class="card">
+    <h2>系统总览</h2>
+    <pre id="overview">加载中...</pre>
+  </div>
+
+  <div class="card">
+    <h2>RAG 参数（只读）</h2>
+    <p class="sub">修改请在 <code>application.yml</code> 中调整后重启服务。</p>
+    <pre id="rag"></pre>
+  </div>
+
+  <div class="card row">
+    <div>
+      <h2>本地记忆会话</h2>
+      <button onclick="loadSessions()">刷新会话</button>
+      <button class="danger" onclick="resetDb()">一键清空本地数据库</button>
+      <div id="sessions" class="session-list"></div>
+    </div>
+    <div>
+      <h2>会话记忆详情</h2>
+      <pre id="memory">请选择左侧会话</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function j(url, options={}) {
+    const res = await fetch(url, options);
+    const text = await res.text();
+    return text ? JSON.parse(text) : {};
+  }
+
+  function fillKpi(data){
+    const rag = data.rag || {};
+    document.getElementById('kpiSessions').textContent = data.memorySessions ?? '-';
+    document.getElementById('kpiScore').textContent = rag['retriever.minScore'] ?? '-';
+    document.getElementById('kpiResults').textContent = rag['retriever.maxResults'] ?? '-';
+    const s = rag['splitter.maxSegmentSize'];
+    const o = rag['splitter.maxOverlapSize'];
+    document.getElementById('kpiSplitter').textContent = (s && o) ? `${s}/${o}` : '-';
+  }
+
+  async function loadOverview() {
+    const data = await j('/admin/api/overview');
+    document.getElementById('overview').textContent = JSON.stringify(data, null, 2);
+    document.getElementById('rag').textContent = JSON.stringify(data.rag || {}, null, 2);
+    fillKpi(data);
+  }
+
+  async function loadSessions() {
+    const list = await j('/admin/api/memory/sessions');
+    const el = document.getElementById('sessions');
+    el.innerHTML = '';
+    list.forEach(id => {
+      const b = document.createElement('button');
+      b.textContent = id;
+      b.onclick = () => loadMemory(id);
+      el.appendChild(b);
+    });
+    if (!list.length) el.textContent = '暂无本地记忆数据';
+  }
+
+  async function loadMemory(sessionId) {
+    const data = await j('/admin/api/memory/' + encodeURIComponent(sessionId));
+    document.getElementById('memory').textContent = JSON.stringify(data, null, 2);
+  }
+
+  async function resetDb() {
+    if (!confirm('确认清空所有本地记忆？该操作不可恢复。')) return;
+    const data = await j('/admin/api/database/reset', { method: 'POST' });
+    alert('已清理：' + data.clearedSessions + ' 个会话');
+    await loadOverview();
+    await loadSessions();
+    document.getElementById('memory').textContent = '请选择左侧会话';
+  }
+
+  loadOverview();
+  loadSessions();
+</script>
+</body>
+</html>

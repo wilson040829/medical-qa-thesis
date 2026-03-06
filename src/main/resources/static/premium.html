@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智能医疗问答系统 · Premium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#05070f;
+      --text:#eaf1ff;
+      --muted:#9fb2d1;
+      --line:rgba(170,194,255,.2);
+      --primary:#6aa7ff;
+      --primary-2:#8a6bff;
+      --card:rgba(20,27,45,.55);
+      --glass:blur(14px);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+    body{overflow-x:hidden}
+
+    .bg-orb{position:fixed;inset:auto;z-index:-1;filter:blur(70px);opacity:.5;pointer-events:none;animation:float 8s ease-in-out infinite alternate}
+    .orb-1{width:420px;height:420px;left:-120px;top:-80px;background:#2d65ff}
+    .orb-2{width:380px;height:380px;right:-110px;top:180px;background:#7d42ff;animation-delay:1.4s}
+    .orb-3{width:300px;height:300px;left:35%;bottom:-120px;background:#00b7ff;animation-delay:2.4s}
+    @keyframes float{from{transform:translateY(0)}to{transform:translateY(24px)}}
+
+    .nav{position:sticky;top:0;z-index:10;backdrop-filter:var(--glass);background:rgba(9,12,22,.55);border-bottom:1px solid var(--line)}
+    .container{width:min(1180px,92vw);margin:0 auto}
+    .nav-inner{height:68px;display:flex;align-items:center;justify-content:space-between}
+    .logo{font-weight:800;letter-spacing:.4px}
+    .logo span{background:linear-gradient(90deg,var(--primary),var(--primary-2));-webkit-background-clip:text;color:transparent}
+    .nav-actions button{margin-left:10px}
+
+    .btn{border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--text);padding:10px 16px;border-radius:12px;cursor:pointer;transition:.22s}
+    .btn:hover{transform:translateY(-2px);border-color:rgba(170,194,255,.45)}
+    .btn.primary{background:linear-gradient(120deg,var(--primary),var(--primary-2));border:none;color:white;box-shadow:0 12px 30px rgba(91,124,255,.35)}
+
+    .hero{padding:90px 0 70px;position:relative}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center}
+    .badge{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:99px;background:rgba(102,152,255,.14);border:1px solid rgba(153,186,255,.4);color:#cfe0ff;font-size:12px}
+    .dot{width:8px;height:8px;border-radius:50%;background:#8dd0ff;animation:pulse 1.6s infinite}
+    @keyframes pulse{0%{transform:scale(1);opacity:1}100%{transform:scale(1.7);opacity:0}}
+
+    h1{font-size:56px;line-height:1.03;letter-spacing:-1px;margin:16px 0 14px}
+    .grad{background:linear-gradient(110deg,#d8e6ff 30%,#99b9ff 58%,#b59bff 85%);-webkit-background-clip:text;color:transparent}
+    .lead{color:var(--muted);font-size:17px;line-height:1.8;max-width:640px}
+    .hero-actions{display:flex;gap:12px;margin-top:24px}
+
+    .hero-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;backdrop-filter:var(--glass);box-shadow:0 20px 40px rgba(0,0,0,.3);animation:up 1.1s ease both}
+    .hero-card img{width:100%;height:420px;object-fit:cover;border-radius:12px;display:block}
+    @keyframes up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+
+    .section{padding:28px 0 78px}
+    .sec-title{font-size:34px;margin:0 0 10px}
+    .sec-sub{color:var(--muted);margin:0 0 26px}
+
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;backdrop-filter:var(--glass);transition:.28s;position:relative;overflow:hidden}
+    .card:before{content:"";position:absolute;inset:-40% auto auto -30%;width:120px;height:220px;background:linear-gradient(180deg,rgba(255,255,255,.22),transparent);transform:rotate(28deg);opacity:0;transition:.4s}
+    .card:hover:before{left:110%;opacity:1}
+    .card:hover{transform:translateY(-6px);border-color:rgba(180,203,255,.55)}
+    .icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(130deg,var(--primary),var(--primary-2));display:grid;place-items:center;font-weight:700}
+    .card h3{margin:14px 0 8px}
+    .card p{margin:0;color:var(--muted);line-height:1.75}
+
+    .gallery{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+    .gallery img{width:100%;height:100%;object-fit:cover;border-radius:16px;border:1px solid var(--line);transition:.35s}
+    .gallery img:hover{transform:scale(1.02)}
+    .stack{display:grid;gap:16px}
+
+    .footer{padding:28px 0 44px;color:#97a8c7;border-top:1px solid var(--line)}
+
+    @media (max-width:980px){
+      .hero-grid,.cards,.gallery{grid-template-columns:1fr}
+      h1{font-size:40px}
+      .hero-card img{height:300px}
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <div class="logo">Med<span>Nexus</span> · 毕设演示</div>
+      <div class="nav-actions">
+        <button class="btn">查看文档</button>
+        <button class="btn primary">立即体验</button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero container">
+    <div class="hero-grid">
+      <div>
+        <div class="badge"><span class="dot"></span> New UI · Motion Enhanced</div>
+        <h1><span class="grad">高级感医疗 AI 网页</span><br/>动效驱动体验升级</h1>
+        <p class="lead">以现代化玻璃拟态 + 动态渐变为核心视觉语言，结合卡片微交互、按钮反馈、光效扫过与悬停动画，构建更有质感、更具品牌势能的医疗智能展示页。</p>
+        <div class="hero-actions">
+          <button class="btn primary">开始咨询</button>
+          <button class="btn">观看演示</button>
+        </div>
+      </div>
+      <div class="hero-card">
+        <img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1300&q=80" alt="medical">
+      </div>
+    </div>
+  </header>
+
+  <section class="section container">
+    <h2 class="sec-title">核心体验亮点</h2>
+    <p class="sec-sub">注重细节的视觉与交互体系：每个元素都在传递“专业、可信、前沿”。</p>
+    <div class="cards">
+      <article class="card">
+        <div class="icon">A</div>
+        <h3>沉浸式动效</h3>
+        <p>背景光球浮动、按钮微位移、卡片扫光与渐进显现动画，让页面有“生命感”。</p>
+      </article>
+      <article class="card">
+        <div class="icon">B</div>
+        <h3>高级材质语言</h3>
+        <p>玻璃拟态 + 冷色霓虹边界，形成高端科技医疗品牌常见的视觉信任感。</p>
+      </article>
+      <article class="card">
+        <div class="icon">C</div>
+        <h3>转化导向布局</h3>
+        <p>首屏即价值主张 + CTA，功能卡片分层清晰，适合毕设答辩与作品展示。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section container">
+    <h2 class="sec-title">视觉素材展示</h2>
+    <p class="sec-sub">在线高质量图库素材（Unsplash），无需本地存储，快速搭建演示氛围。</p>
+    <div class="gallery">
+      <img src="https://images.unsplash.com/photo-1666214280391-8ff5bd3c0bf0?auto=format&fit=crop&w=1400&q=80" alt="doctor">
+      <div class="stack">
+        <img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322?auto=format&fit=crop&w=1000&q=80" alt="device">
+        <img src="https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=1000&q=80" alt="care">
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer container">
+    © 2026 智能医疗问答系统 · Premium Landing · Built for Graduation Project
+  </footer>
+</body>
+</html>

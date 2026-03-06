@@ -7,6 +7,15 @@ langchain4j:
       log-requests: true
       log-responses: true
 
+rag:
+  splitter:
+    max-segment-size: 500
+    max-overlap-size: 80
+  retriever:
+    min-score: 0.72
+    max-results: 6
+
 logging:
   level:
     dev.langchain4j: debug
+    org.example.consultant: info
