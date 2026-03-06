@@ -128,15 +128,28 @@
       <button onclick="loadSessions()">刷新会话</button>
       <button class="danger" onclick="resetDb()">一键清空本地数据库</button>
       <div id="sessions" class="session-list"></div>
+
+      <h2 style="margin-top:14px;">记忆检索测试</h2>
+      <input id="recallQ" placeholder="输入问题，测试当前会话会召回什么记忆" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;" />
+      <div style="margin-top:8px;">
+        <button onclick="testRecall()">测试召回</button>
+        <button onclick="distillCurrent()">蒸馏当前会话</button>
+      </div>
     </div>
     <div>
       <h2>会话记忆详情</h2>
       <pre id="memory">请选择左侧会话</pre>
+      <h2 style="margin-top:10px;">会话记忆统计</h2>
+      <pre id="memoryStats">请选择左侧会话</pre>
+      <h2 style="margin-top:10px;">召回结果</h2>
+      <pre id="recall">请选择会话并输入测试问题</pre>
     </div>
   </div>
 </div>
 
 <script>
+  let currentSessionId = null;
+
   async function j(url, options={}) {
     const res = await fetch(url, options);
     const text = await res.text();
@@ -174,8 +187,28 @@
   }
 
   async function loadMemory(sessionId) {
+    currentSessionId = sessionId;
     const data = await j('/admin/api/memory/' + encodeURIComponent(sessionId));
     document.getElementById('memory').textContent = JSON.stringify(data, null, 2);
+    const stats = await j('/admin/api/memory/' + encodeURIComponent(sessionId) + '/stats');
+    document.getElementById('memoryStats').textContent = JSON.stringify(stats, null, 2);
+    document.getElementById('recall').textContent = '请输入检索问题并点击【测试召回】';
+  }
+
+  async function testRecall() {
+    if (!currentSessionId) return alert('请先选择一个会话');
+    const q = (document.getElementById('recallQ').value || '').trim();
+    if (!q) return alert('请先输入测试问题');
+    const data = await j('/admin/api/memory/' + encodeURIComponent(currentSessionId) + '/recall?query=' + encodeURIComponent(q) + '&topK=5');
+    document.getElementById('recall').textContent = JSON.stringify(data, null, 2);
+  }
+
+  async function distillCurrent() {
+    if (!currentSessionId) return alert('请先选择一个会话');
+    const data = await j('/admin/api/memory/' + encodeURIComponent(currentSessionId) + '/distill', { method: 'POST' });
+    alert('蒸馏完成：' + JSON.stringify(data));
+    await loadMemory(currentSessionId);
+    await loadOverview();
   }
 
   async function resetDb() {

@@ -41,6 +41,7 @@ public class AdminController {
         result.put("appName", environment.getProperty("spring.application.name", "consultant"));
         result.put("memoryPath", localMemoryService.baseDir());
         result.put("memorySessions", localMemoryService.listSessions().size());
+        result.put("memoryTypeStats", localMemoryService.globalTypeStats());
 
         Map<String, Object> rag = new LinkedHashMap<>();
         rag.put("splitter.maxSegmentSize", maxSegmentSize);
@@ -59,6 +60,23 @@ public class AdminController {
     @GetMapping("/memory/{sessionId}")
     public List<LocalMemoryService.MemoryEntry> memoryOfSession(@PathVariable String sessionId) {
         return localMemoryService.getSessionMemory(sessionId);
+    }
+
+    @GetMapping("/memory/{sessionId}/stats")
+    public Map<String, Long> memoryStats(@PathVariable String sessionId) {
+        return localMemoryService.typeStatsOf(sessionId);
+    }
+
+    @GetMapping("/memory/{sessionId}/recall")
+    public List<LocalMemoryService.MemoryEntry> memoryRecall(@PathVariable String sessionId,
+                                                              @RequestParam(defaultValue = "") String query,
+                                                              @RequestParam(defaultValue = "4") int topK) {
+        return localMemoryService.recall(sessionId, query, topK);
+    }
+
+    @PostMapping("/memory/{sessionId}/distill")
+    public Map<String, Object> distillMemory(@PathVariable String sessionId) {
+        return localMemoryService.distillSession(sessionId);
     }
 
     @DeleteMapping("/memory/{sessionId}")
