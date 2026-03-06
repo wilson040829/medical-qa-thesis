@@ -68,14 +68,14 @@ public class AdminController {
     }
 
     @GetMapping("/memory/{sessionId}/recall")
-    public List<LocalMemoryService.MemoryEntry> memoryRecall(@PathVariable String sessionId,
-                                                              @RequestParam(defaultValue = "") String query,
-                                                              @RequestParam(defaultValue = "4") int topK) {
+    public List<LocalMemoryService.MemoryEntry> recall(@PathVariable String sessionId,
+                                                        @RequestParam(defaultValue = "") String query,
+                                                        @RequestParam(defaultValue = "5") int topK) {
         return localMemoryService.recall(sessionId, query, topK);
     }
 
     @PostMapping("/memory/{sessionId}/distill")
-    public Map<String, Object> distillMemory(@PathVariable String sessionId) {
+    public Map<String, Object> distill(@PathVariable String sessionId) {
         return localMemoryService.distillSession(sessionId);
     }
 
