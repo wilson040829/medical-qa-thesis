@@ -1,0 +1,38 @@
+{
+  "nodes": [
+    {"id": "symptom_fever", "type": "symptom", "name": "发热", "aliases": ["发热", "发烧", "高热", "低烧"], "summary": "发热通常提示机体可能存在感染或炎症反应。"},
+    {"id": "symptom_cough", "type": "symptom", "name": "咳嗽", "aliases": ["咳嗽", "咳", "咳痰"], "summary": "咳嗽常见于上呼吸道感染、支气管炎等情况。"},
+    {"id": "symptom_headache", "type": "symptom", "name": "头痛", "aliases": ["头痛", "头疼", "脑袋疼"], "summary": "头痛可见于发热、感染、血压异常等多种情况。"},
+    {"id": "symptom_chest_pain", "type": "symptom", "name": "胸痛", "aliases": ["胸痛", "胸口痛", "胸闷胸痛"], "summary": "胸痛属于需要优先评估风险的症状。"},
+    {"id": "condition_common_cold", "type": "condition", "name": "普通感冒", "aliases": ["普通感冒", "感冒", "伤风"], "summary": "普通感冒多数由病毒引起。"},
+    {"id": "condition_upper_respiratory_infection", "type": "condition", "name": "上呼吸道感染", "aliases": ["上呼吸道感染", "上感"], "summary": "上呼吸道感染常见表现包括发热、咳嗽、流涕、咽痛。"},
+    {"id": "condition_influenza", "type": "condition", "name": "流感", "aliases": ["流感", "甲流", "乙流"], "summary": "流感通常由流感病毒引起。"},
+    {"id": "condition_hypertension", "type": "condition", "name": "高血压", "aliases": ["高血压", "血压高"], "summary": "高血压是常见慢性病，长期控制不佳会增加心脑肾并发症风险。"},
+    {"id": "condition_hypertensive_crisis", "type": "condition", "name": "高血压危象", "aliases": ["高血压危象", "血压危象"], "summary": "血压显著升高并伴器官风险时需要立即就医。"},
+    {"id": "drug_antibiotics", "type": "drug", "name": "抗生素", "aliases": ["抗生素", "消炎药", "阿莫西林", "头孢"], "summary": "抗生素主要用于细菌感染，不适用于病毒性感冒和流感。"},
+    {"id": "drug_ibuprofen", "type": "drug", "name": "布洛芬", "aliases": ["布洛芬", "ibuprofen"], "summary": "布洛芬可用于退热和缓解疼痛。"},
+    {"id": "drug_acetaminophen", "type": "drug", "name": "对乙酰氨基酚", "aliases": ["对乙酰氨基酚", "扑热息痛", "acetaminophen"], "summary": "对乙酰氨基酚可用于退热和缓解轻中度疼痛。"},
+    {"id": "exam_blood_pressure", "type": "exam", "name": "血压测量", "aliases": ["血压", "测血压", "血压测量"], "summary": "血压测量是识别高血压的基础检查。"},
+    {"id": "department_respiratory", "type": "department", "name": "呼吸内科", "aliases": ["呼吸内科"], "summary": "呼吸系统相关症状可优先考虑呼吸内科。"},
+    {"id": "department_cardiology", "type": "department", "name": "心内科", "aliases": ["心内科", "心血管内科"], "summary": "血压异常、胸痛、心慌等问题常需心内科评估。"},
+    {"id": "department_fever_clinic", "type": "department", "name": "发热门诊", "aliases": ["发热门诊"], "summary": "发热伴感染风险时可先到发热门诊评估。"},
+    {"id": "department_emergency", "type": "department", "name": "急诊", "aliases": ["急诊"], "summary": "危险信号出现时应尽快去急诊。"}
+  ],
+  "edges": [
+    {"source": "symptom_fever", "relation": "may_suggest", "target": "condition_upper_respiratory_infection", "evidence": "发热常见于上呼吸道感染等感染性疾病。"},
+    {"source": "symptom_fever", "relation": "may_suggest", "target": "condition_influenza", "evidence": "发热可见于流感等病毒感染。"},
+    {"source": "symptom_cough", "relation": "may_suggest", "target": "condition_upper_respiratory_infection", "evidence": "咳嗽是上呼吸道感染常见表现之一。"},
+    {"source": "symptom_headache", "relation": "may_suggest", "target": "condition_hypertension", "evidence": "头痛可见于血压升高等情况，但不能据此直接确诊。"},
+    {"source": "symptom_chest_pain", "relation": "warning_if", "target": "department_emergency", "evidence": "胸痛属于需要优先排查急症风险的症状。"},
+    {"source": "condition_upper_respiratory_infection", "relation": "department", "target": "department_respiratory", "evidence": "呼吸道症状明显时可优先考虑呼吸内科。"},
+    {"source": "condition_influenza", "relation": "department", "target": "department_fever_clinic", "evidence": "发热伴感染表现时可先到发热门诊评估。"},
+    {"source": "condition_hypertension", "relation": "requires", "target": "exam_blood_pressure", "evidence": "识别高血压需要基于血压测量结果。"},
+    {"source": "condition_hypertension", "relation": "department", "target": "department_cardiology", "evidence": "血压持续升高可到心内科进一步评估和管理。"},
+    {"source": "condition_hypertension", "relation": "warning_if", "target": "condition_hypertensive_crisis", "evidence": "当血压显著升高并伴高风险表现时要警惕高血压危象。"},
+    {"source": "condition_hypertensive_crisis", "relation": "department", "target": "department_emergency", "evidence": "高血压危象需要尽快急诊处理。"},
+    {"source": "drug_antibiotics", "relation": "not_for", "target": "condition_common_cold", "evidence": "普通感冒多数由病毒引起，抗生素通常无效。"},
+    {"source": "drug_antibiotics", "relation": "not_for", "target": "condition_influenza", "evidence": "流感属于病毒感染，抗生素不能直接治疗流感病毒。"},
+    {"source": "drug_ibuprofen", "relation": "can_use_if", "target": "symptom_fever", "evidence": "布洛芬常用于退热。"},
+    {"source": "drug_acetaminophen", "relation": "can_use_if", "target": "symptom_fever", "evidence": "对乙酰氨基酚常用于退热。"}
+  ]
+}

@@ -5,7 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 import org.example.consultant.Aiservice.ConsultantService;
 import org.example.consultant.dto.ChatRequest;
 import org.example.consultant.dto.SessionView;
+import org.example.consultant.graph.MedicalKnowledgeGraphService;
+import org.example.consultant.guard.MedicalScopeGuardService;
 import org.example.consultant.memory.LocalMemoryService;
+import org.example.consultant.reasoning.AdaptiveReasoningService;
 import org.example.consultant.session.SessionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -26,13 +29,22 @@ public class ChatController {
     private final ConsultantService consultantService;
     private final SessionService sessionService;
     private final LocalMemoryService localMemoryService;
+    private final MedicalScopeGuardService medicalScopeGuardService;
+    private final MedicalKnowledgeGraphService medicalKnowledgeGraphService;
+    private final AdaptiveReasoningService adaptiveReasoningService;
 
     public ChatController(ConsultantService consultantService,
                           SessionService sessionService,
-                          LocalMemoryService localMemoryService) {
+                          LocalMemoryService localMemoryService,
+                          MedicalScopeGuardService medicalScopeGuardService,
+                          MedicalKnowledgeGraphService medicalKnowledgeGraphService,
+                          AdaptiveReasoningService adaptiveReasoningService) {
         this.consultantService = consultantService;
         this.sessionService = sessionService;
         this.localMemoryService = localMemoryService;
+        this.medicalScopeGuardService = medicalScopeGuardService;
+        this.medicalKnowledgeGraphService = medicalKnowledgeGraphService;
+        this.adaptiveReasoningService = adaptiveReasoningService;
     }
 
     @GetMapping("/sessions")
@@ -56,11 +68,8 @@ public class ChatController {
         int sourceTurn = localMemoryService.getSessionMemory(request.sessionId()).size() + 1;
         localMemoryService.append(request.sessionId(), "user", request.message());
 
-        String prompt = buildPromptWithMemory(request.sessionId(), request.message());
-        String answer = consultantService.chat(request.sessionId(), prompt);
-
+        String answer = generateAnswer(request.sessionId(), request.message(), sourceTurn);
         localMemoryService.append(request.sessionId(), "assistant", answer);
-        localMemoryService.extractAndAppend(request.sessionId(), request.message(), answer, sourceTurn);
         return answer;
     }
 
@@ -75,11 +84,7 @@ public class ChatController {
                 int sourceTurn = localMemoryService.getSessionMemory(request.sessionId()).size() + 1;
                 localMemoryService.append(request.sessionId(), "user", request.message());
 
-                emitter.send("[思考] 正在检索长期记忆与知识库...\n", MediaType.TEXT_PLAIN);
-                String prompt = buildPromptWithMemory(request.sessionId(), request.message());
-                String answer = consultantService.chat(request.sessionId(), prompt);
-                emitter.send("[思考] 已完成生成，流式输出中...\n", MediaType.TEXT_PLAIN);
-
+                String answer = generateAnswer(request.sessionId(), request.message(), sourceTurn);
                 int step = 24;
                 for (int i = 0; i < answer.length(); i += step) {
                     int end = Math.min(i + step, answer.length());
@@ -87,7 +92,6 @@ public class ChatController {
                     Thread.sleep(25);
                 }
                 localMemoryService.append(request.sessionId(), "assistant", answer);
-                localMemoryService.extractAndAppend(request.sessionId(), request.message(), answer, sourceTurn);
                 emitter.complete();
             } catch (Exception e) {
                 emitter.completeWithError(new RuntimeException("流式输出失败: " + e.getMessage(), e));
@@ -106,32 +110,57 @@ public class ChatController {
         int sourceTurn = localMemoryService.getSessionMemory(sessionId).size() + 1;
         localMemoryService.append(sessionId, "user", message);
 
-        String prompt = buildPromptWithMemory(sessionId, message);
-        String answer = consultantService.chat(sessionId, prompt);
-
+        String answer = generateAnswer(sessionId, message, sourceTurn);
         localMemoryService.append(sessionId, "assistant", answer);
-        localMemoryService.extractAndAppend(sessionId, message, answer, sourceTurn);
+        return answer;
+    }
+
+    private String generateAnswer(String sessionId, String userMessage, int sourceTurn) {
+        MedicalScopeGuardService.ScopeDecision decision = medicalScopeGuardService.evaluate(userMessage);
+        if (!decision.inScope()) {
+            return decision.refusalMessage();
+        }
+
+        String prompt = buildPromptWithMemory(sessionId, userMessage);
+        String answer = consultantService.chat(sessionId, prompt);
+        localMemoryService.extractAndAppend(sessionId, userMessage, answer, sourceTurn);
         return answer;
     }
 
     private String buildPromptWithMemory(String sessionId, String userMessage) {
         List<LocalMemoryService.MemoryEntry> recalled = localMemoryService.recall(sessionId, userMessage, 5);
-        if (recalled.isEmpty()) return userMessage;
+        MedicalKnowledgeGraphService.GraphContext graphContext = medicalKnowledgeGraphService.query(userMessage);
+        AdaptiveReasoningService.ReasoningPlan reasoningPlan = adaptiveReasoningService.plan(userMessage, graphContext);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("[长期记忆参考]\n");
-        int idx = 1;
-        for (LocalMemoryService.MemoryEntry e : recalled) {
-            sb.append(idx++)
-                    .append(". (")
-                    .append(e.getType())
-                    .append(", conf=")
-                    .append(String.format("%.2f", e.getConfidence() == null ? 0.0 : e.getConfidence()))
-                    .append(") ")
-                    .append(e.getContent())
-                    .append("\n");
+        sb.append(reasoningPlan.toPromptBlock()).append("\n");
+
+        if (graphContext.hasEvidence()) {
+            sb.append(graphContext.toPromptBlock()).append("\n");
         }
-        sb.append("\n[用户当前问题]\n").append(userMessage);
+
+        if (!recalled.isEmpty()) {
+            sb.append("[长期记忆参考]\n");
+            int idx = 1;
+            for (LocalMemoryService.MemoryEntry e : recalled) {
+                sb.append(idx++)
+                        .append(". (")
+                        .append(e.getType())
+                        .append(", conf=")
+                        .append(String.format("%.2f", e.getConfidence() == null ? 0.0 : e.getConfidence()))
+                        .append(") ")
+                        .append(e.getContent())
+                        .append("\n");
+            }
+            sb.append("\n");
+        }
+
+        sb.append("[回答要求]\n")
+                .append("- 优先参考自适应推理模式和知识图谱证据组织回答，但不要把它们机械照搬给用户。\n")
+                .append("- 若知识图谱证据不足，要明确说明只是初步判断。\n")
+                .append("- 若 RAG 检索到外部知识，与知识图谱冲突时，优先采用更具体、更安全、更新的医疗建议。\n\n");
+
+        sb.append("[用户当前问题]\n").append(userMessage);
         return sb.toString();
     }
 
