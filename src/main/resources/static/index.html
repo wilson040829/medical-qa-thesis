@@ -383,11 +383,38 @@
       return d.toLocaleTimeString();
     }
 
-    function append(role, text) {
+    const reasoningModeLabels = {
+      EMERGENCY_ASSESSMENT: '紧急风险评估',
+      MEDICATION_SAFETY: '用药安全',
+      REPORT_INTERPRETATION: '检查结果解读',
+      DEPARTMENT_GUIDANCE: '就医分诊',
+      SYMPTOM_TRIAGE: '症状分诊',
+      GENERAL_HEALTH: '通用健康咨询'
+    };
+
+    function formatReasoningMeta(headers) {
+      const mode = headers.get('X-Reasoning-Mode');
+      const confidence = headers.get('X-Reasoning-Confidence');
+      const secondaryMode = headers.get('X-Reasoning-Secondary-Mode');
+      if (!mode) return '';
+
+      const parts = [];
+      parts.push(`推理：${reasoningModeLabels[mode] || mode}`);
+      if (confidence) {
+        parts.push(`置信度 ${confidence}`);
+      }
+      if (secondaryMode && reasoningModeLabels[secondaryMode]) {
+        parts.push(`次级：${reasoningModeLabels[secondaryMode]}`);
+      }
+      return parts.join(' · ');
+    }
+
+    function append(role, text, extraMeta = '') {
       const wrap = document.createElement('div');
       wrap.className = `msg ${role}`;
+      const metaText = `${role === 'user' ? '你' : '医疗顾问'} · ${now()}${extraMeta ? ' · ' + extraMeta : ''}`;
       wrap.innerHTML = `
-        <div class="meta">${role === 'user' ? '你' : '医疗顾问'} · ${now()}</div>
+        <div class="meta">${metaText}</div>
         <div class="bubble"></div>
       `;
       wrap.querySelector('.bubble').textContent = text;
@@ -497,13 +524,16 @@
           throw new Error(await res.text());
         }
 
+        const reasoningMeta = formatReasoningMeta(res.headers);
+
         if (!useStream) {
           const data = await res.text();
-          append('bot', data || '(空响应)');
+          append('bot', data || '(空响应)', reasoningMeta);
         } else {
           const wrap = document.createElement('div');
           wrap.className = 'msg bot';
-          wrap.innerHTML = `<div class="meta">医疗顾问 · ${now()}</div><div class="bubble"></div>`;
+          const metaText = `医疗顾问 · ${now()}${reasoningMeta ? ' · ' + reasoningMeta : ''}`;
+          wrap.innerHTML = `<div class="meta">${metaText}</div><div class="bubble"></div>`;
           const bubble = wrap.querySelector('.bubble');
           chat.appendChild(wrap);
           chat.scrollTop = chat.scrollHeight;

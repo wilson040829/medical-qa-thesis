@@ -1,9 +1,12 @@
 package org.example.consultant.controller;
 
+import org.example.consultant.graph.MedicalKnowledgeGraphService;
 import org.example.consultant.memory.LocalMemoryService;
+import org.example.consultant.rag.DynamicKnowledgeBaseService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -16,6 +19,8 @@ public class AdminController {
 
     private final LocalMemoryService localMemoryService;
     private final Environment environment;
+    private final DynamicKnowledgeBaseService knowledgeBaseService;
+    private final MedicalKnowledgeGraphService medicalKnowledgeGraphService;
 
     @Value("${rag.splitter.max-segment-size:500}")
     private int maxSegmentSize;
@@ -29,9 +34,14 @@ public class AdminController {
     @Value("${rag.retriever.max-results:6}")
     private int maxResults;
 
-    public AdminController(LocalMemoryService localMemoryService, Environment environment) {
+    public AdminController(LocalMemoryService localMemoryService,
+                           Environment environment,
+                           DynamicKnowledgeBaseService knowledgeBaseService,
+                           MedicalKnowledgeGraphService medicalKnowledgeGraphService) {
         this.localMemoryService = localMemoryService;
         this.environment = environment;
+        this.knowledgeBaseService = knowledgeBaseService;
+        this.medicalKnowledgeGraphService = medicalKnowledgeGraphService;
     }
 
     @GetMapping("/overview")
@@ -42,6 +52,8 @@ public class AdminController {
         result.put("memoryPath", localMemoryService.baseDir());
         result.put("memorySessions", localMemoryService.listSessions().size());
         result.put("memoryTypeStats", localMemoryService.globalTypeStats());
+        result.put("knowledgeBase", knowledgeBaseService.overview());
+        result.put("knowledgeGraph", medicalKnowledgeGraphService.overview());
 
         Map<String, Object> rag = new LinkedHashMap<>();
         rag.put("splitter.maxSegmentSize", maxSegmentSize);
@@ -49,6 +61,46 @@ public class AdminController {
         rag.put("retriever.minScore", minScore);
         rag.put("retriever.maxResults", maxResults);
         result.put("rag", rag);
+        return result;
+    }
+
+    @GetMapping("/knowledge/overview")
+    public Map<String, Object> knowledgeOverview() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("knowledgeBase", knowledgeBaseService.overview());
+        result.put("knowledgeGraph", medicalKnowledgeGraphService.overview());
+        return result;
+    }
+
+    @PostMapping("/knowledge/rebuild")
+    public Map<String, Object> rebuildKnowledge() {
+        DynamicKnowledgeBaseService.RebuildResult kb = knowledgeBaseService.rebuild();
+        MedicalKnowledgeGraphService.GraphRebuildResult graph = medicalKnowledgeGraphService.rebuildFromKnowledgeBase();
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ok", true);
+        result.put("knowledgeBase", kb);
+        result.put("knowledgeGraph", graph);
+        return result;
+    }
+
+    @PostMapping("/knowledge/upload")
+    public Map<String, Object> uploadKnowledge(@RequestParam("files") List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("请至少上传一个文件");
+        }
+        List<DynamicKnowledgeBaseService.StoredFile> storedFiles = files.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .map(knowledgeBaseService::storeFile)
+                .toList();
+
+        DynamicKnowledgeBaseService.RebuildResult kb = knowledgeBaseService.rebuild();
+        MedicalKnowledgeGraphService.GraphRebuildResult graph = medicalKnowledgeGraphService.rebuildFromKnowledgeBase();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("ok", true);
+        result.put("storedFiles", storedFiles);
+        result.put("knowledgeBase", kb);
+        result.put("knowledgeGraph", graph);
         return result;
     }
 
